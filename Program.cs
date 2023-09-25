@@ -1,6 +1,22 @@
+using Chat.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "Hubs",
+        builder =>
+        {
+            builder
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                // Anonymous origins NOT allowed for web sockets
+                .WithOrigins("http://localhost:3000","https://jgrissom.github.io")
+                .AllowCredentials();
+        });
+});
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -18,8 +34,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+app.UseCors("Hubs");
+
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHub<ChatHub>("/hubs/chat");
+});
 
 app.Run();
